@@ -1,6 +1,8 @@
 const Queue = {
   myQueue: [],
   isDJ: false,
+  allSlots: [],
+  currentIndex: -1,
   searchTimeout: null,
 
   init() {
@@ -155,6 +157,8 @@ const Queue = {
 
     this.isDJ = !!mySlot;
     this.myQueue = mySlot ? mySlot.queue : [];
+    this.allSlots = data.slots;
+    this.currentIndex = data.currentIndex;
 
     this.renderQueue();
   },
@@ -165,13 +169,84 @@ const Queue = {
     const addSection = document.getElementById('add-track-section');
 
     if (!this.isDJ) {
-      container.innerHTML = '';
-      emptyEl.classList.add('hidden');
+      // Read-only view: show all DJs' queues
       addSection.classList.add('hidden');
-      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0;">Step up as a DJ to queue tracks!</div>';
+      emptyEl.classList.add('hidden');
+      container.innerHTML = '';
+
+      if (!this.allSlots || this.allSlots.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0;">No DJs yet. Step up to play!</div>';
+        return;
+      }
+
+      let hasContent = false;
+      this.allSlots.forEach((slot, i) => {
+        const group = document.createElement('div');
+        group.className = 'queue-dj-group';
+
+        const label = document.createElement('div');
+        label.className = 'queue-dj-label';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = slot.username + "'s Queue";
+        label.appendChild(nameSpan);
+
+        if (i === this.currentIndex) {
+          const badge = document.createElement('span');
+          badge.className = 'now-badge';
+          badge.textContent = 'NOW';
+          label.appendChild(badge);
+        }
+
+        group.appendChild(label);
+
+        if (slot.queue && slot.queue.length > 0) {
+          hasContent = true;
+          slot.queue.forEach(track => {
+            const el = document.createElement('div');
+            el.className = 'queue-track';
+
+            const thumb = document.createElement('img');
+            thumb.className = 'queue-track-thumb';
+            thumb.src = track.thumbnail || '';
+            thumb.alt = '';
+
+            const info = document.createElement('div');
+            info.className = 'queue-track-info';
+
+            const title = document.createElement('div');
+            title.className = 'queue-track-title';
+            title.textContent = track.title || track.videoId;
+
+            const duration = document.createElement('div');
+            duration.className = 'queue-track-duration';
+            duration.textContent = formatTime(track.duration || 0);
+
+            info.appendChild(title);
+            info.appendChild(duration);
+
+            el.appendChild(thumb);
+            el.appendChild(info);
+            group.appendChild(el);
+          });
+        } else {
+          const empty = document.createElement('div');
+          empty.style.cssText = 'font-size: 11px; color: var(--text-muted); padding: 4px 0;';
+          empty.textContent = 'No tracks queued';
+          group.appendChild(empty);
+        }
+
+        container.appendChild(group);
+      });
+
+      if (!hasContent && this.allSlots.length > 0) {
+        // All DJs have empty queues — still show the groups
+      }
+
       return;
     }
 
+    // DJ's own editable queue
     addSection.classList.remove('hidden');
 
     if (this.myQueue.length === 0) {
@@ -208,7 +283,7 @@ const Queue = {
 
       const removeBtn = document.createElement('button');
       removeBtn.className = 'queue-track-remove';
-      removeBtn.textContent = '✕';
+      removeBtn.textContent = '\u2715';
       removeBtn.addEventListener('click', () => {
         Socket.emit('dj:removeTrack', { trackIndex: index });
       });

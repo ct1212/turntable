@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>document.documentElement.dataset.theme=localStorage.getItem('tt_theme')||'dark'</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Turntable</title>
@@ -10,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode"></button>
   <div class="lobby">
     <header class="lobby-header">
       <h1><span>Turntable</span></h1>
@@ -57,6 +59,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/lobby.js"></script>
 </body>
 </html>

@@ -423,6 +423,14 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#queue-tracks {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .queue-empty {
@@ -481,9 +489,9 @@ html, body {
   color: var(--accent-lame);
 }
 
-/* Add track section */
+/* Add track section — always pinned at bottom */
 .add-track-section {
-  margin-top: auto;
+  flex-shrink: 0;
   padding-top: var(--space-md);
   border-top: 1px solid var(--border-subtle);
 }
@@ -637,8 +645,235 @@ html, body {
   color: var(--text-muted);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Now playing actions wrapper */
+.now-playing-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: var(--space-md);
+}
+
+/* Skip button */
+.skip-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.skip-btn:hover {
+  background: var(--accent-primary-dim);
+  color: var(--accent-primary);
+}
+
+/* Connection banner */
+.connection-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  background: var(--accent-lame);
+  color: white;
+  text-align: center;
+  padding: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  animation: banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes banner-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Vote animations */
+.vote-float {
+  position: fixed;
+  pointer-events: none;
+  font-size: 20px;
+  font-weight: 700;
+  z-index: 1000;
+  animation: vote-float-up 1.2s ease-out forwards;
+}
+
+.vote-float.awesome { color: var(--accent-awesome); }
+.vote-float.lame { color: var(--accent-lame); }
+
+@keyframes vote-float-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.4); }
+}
+
+/* Sidebar resize handle (hidden on desktop) */
+.sidebar-resize-handle {
+  display: none;
+}
+
+/* Queue read-only view */
+.queue-dj-group {
+  margin-bottom: var(--space-md);
+}
+
+.queue-dj-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--accent-dj);
+  margin-bottom: var(--space-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.queue-dj-label .now-badge {
+  background: var(--accent-dj-dim);
+  color: var(--accent-dj);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Room themes */
+.room-theme-neon {
+  --accent-primary: #ff006e;
+  --accent-primary-dim: rgba(255, 0, 110, 0.15);
+  --accent-chat: #ff69b4;
+  --bg-stage: #1a0012;
+}
+
+.room-theme-chill {
+  --accent-primary: #00cec9;
+  --accent-primary-dim: rgba(0, 206, 201, 0.15);
+  --accent-chat: #81ecec;
+  --bg-stage: #0a1a1a;
+}
+
+.room-theme-retro {
+  --accent-primary: #e17055;
+  --accent-primary-dim: rgba(225, 112, 85, 0.15);
+  --accent-chat: #fab1a0;
+  --bg-stage: #1a110e;
+}
+
+.room-theme-midnight {
+  --accent-primary: #0984e3;
+  --accent-primary-dim: rgba(9, 132, 227, 0.15);
+  --accent-chat: #74b9ff;
+  --bg-stage: #0a0e1a;
+}
+
+/* Room themes - light mode */
+[data-theme="light"] .room-theme-neon { --bg-stage: #fff0f6; }
+[data-theme="light"] .room-theme-chill { --bg-stage: #f0fffe; }
+[data-theme="light"] .room-theme-retro { --bg-stage: #fff5f0; }
+[data-theme="light"] .room-theme-midnight { --bg-stage: #f0f5ff; }
+
+/* QR Code widget */
+.qr-widget {
+  position: fixed;
+  bottom: var(--space-md);
+  right: var(--space-md);
+  z-index: 100;
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  text-align: center;
+}
+
+.qr-widget:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-glow);
+}
+
+.qr-img {
+  display: block;
+  border-radius: 4px;
+}
+
+.qr-label {
+  font-size: 9px;
+  color: #666;
+  margin-top: 2px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* QR modal (enlarged view) */
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1002;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-modal-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  position: relative;
+  max-width: 300px;
+}
+
+.qr-modal-img {
+  display: block;
+  margin: 0 auto var(--space-md);
+  border-radius: var(--radius-sm);
+}
+
+.qr-modal-url {
+  font-size: var(--font-size-xs);
+  color: #666;
+  word-break: break-all;
+  margin-bottom: var(--space-md);
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
+
+.qr-copy-btn {
+  background: var(--accent-primary);
+  color: white;
+  padding: 10px 24px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+
+.qr-copy-btn:hover {
+  opacity: 0.9;
+}
+
+.qr-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  font-size: 24px;
+  color: #999;
+  line-height: 1;
+}
+
+.qr-close-btn:hover {
+  color: #333;
+}
+
+/* Responsive — phones and tablets */
+@media (max-width: 1024px) {
   .room-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
@@ -666,8 +901,48 @@ html, body {
     max-height: 45vh;
   }
 
-  /* Don't push input to bottom on mobile — just stack it */
-  .add-track-section {
-    margin-top: var(--space-sm);
+  .sidebar-resize-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 4px;
+    cursor: ns-resize;
+    touch-action: none;
+  }
+
+  .sidebar-resize-handle .resize-grip {
+    width: 40px;
+    height: 4px;
+    background: var(--border-panel);
+    border-radius: 2px;
+  }
+
+  .sidebar-resize-handle:active .resize-grip {
+    background: var(--accent-primary);
+  }
+
+  .now-playing-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .skip-btn {
+    padding: 6px 12px;
+    font-size: var(--font-size-xs);
+  }
+
+  .qr-widget {
+    bottom: var(--space-sm);
+    right: var(--space-sm);
+    padding: 4px;
+  }
+
+  .qr-widget .qr-img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .qr-label {
+    font-size: 8px;
   }
 }

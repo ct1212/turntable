@@ -16,8 +16,25 @@ const Voting = {
   },
 
   onUpdate(data) {
-    document.getElementById('awesome-count').textContent = data.awesome || 0;
-    document.getElementById('lame-count').textContent = data.lame || 0;
+    const awesomeEl = document.getElementById('awesome-count');
+    const lameEl = document.getElementById('lame-count');
+
+    const prevAwesome = parseInt(awesomeEl.textContent) || 0;
+    const prevLame = parseInt(lameEl.textContent) || 0;
+
+    const newAwesome = data.awesome || 0;
+    const newLame = data.lame || 0;
+
+    awesomeEl.textContent = newAwesome;
+    lameEl.textContent = newLame;
+
+    // Floating vote animations
+    if (newAwesome > prevAwesome) {
+      this.floatReaction('vote-awesome', '+1', 'awesome');
+    }
+    if (newLame > prevLame) {
+      this.floatReaction('vote-lame', '-1', 'lame');
+    }
   },
 
   resetVote() {
@@ -31,5 +48,19 @@ const Voting = {
 
     awesomeBtn.classList.toggle('active', this.myVote === 'awesome');
     lameBtn.classList.toggle('active', this.myVote === 'lame');
+  },
+
+  floatReaction(btnId, text, type) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+
+    const rect = btn.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'vote-float ' + type;
+    el.textContent = text;
+    el.style.left = (rect.left + rect.width / 2 - 12) + 'px';
+    el.style.top = (rect.top - 5) + 'px';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
   }
 };

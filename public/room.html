@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>document.documentElement.dataset.theme=localStorage.getItem('tt_theme')||'dark'</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Turntable - Room</title>
@@ -11,6 +12,7 @@
 </head>
 <body>
   <div class="toast-container" id="toast-container"></div>
+  <div class="connection-banner hidden" id="connection-banner">Reconnecting...</div>
 
   <div class="room-layout">
     <!-- Top Bar -->
@@ -20,7 +22,10 @@
         <span class="room-name" id="room-name">Room</span>
         <span class="room-theme" id="room-theme"></span>
       </div>
-      <span class="room-user-count" id="room-user-count">0 people</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="room-user-count" id="room-user-count">0 people</span>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" style="position:static;width:32px;height:32px;font-size:14px;"></button>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -53,13 +58,16 @@
           </div>
         </div>
         <div class="now-playing-time" id="np-time"></div>
-        <div class="vote-buttons">
-          <button class="vote-btn vote-btn-awesome" id="vote-awesome">
-            &#9650; <span class="vote-count" id="awesome-count">0</span>
-          </button>
-          <button class="vote-btn vote-btn-lame" id="vote-lame">
-            &#9660; <span class="vote-count" id="lame-count">0</span>
-          </button>
+        <div class="now-playing-actions">
+          <div class="vote-buttons">
+            <button class="vote-btn vote-btn-awesome" id="vote-awesome">
+              &#9650; <span class="vote-count" id="awesome-count">0</span>
+            </button>
+            <button class="vote-btn vote-btn-lame" id="vote-lame">
+              &#9660; <span class="vote-count" id="lame-count">0</span>
+            </button>
+          </div>
+          <button class="skip-btn hidden" id="skip-btn">Skip &#9197;</button>
         </div>
       </div>
 
@@ -75,6 +83,9 @@
 
     <!-- Sidebar -->
     <div class="room-sidebar">
+      <div class="sidebar-resize-handle" id="sidebar-resize-handle">
+        <div class="resize-grip"></div>
+      </div>
       <div class="sidebar-tabs">
         <button class="sidebar-tab active" data-tab="roster">People</button>
         <button class="sidebar-tab" data-tab="queue">Queue</button>
@@ -117,7 +128,22 @@
     </div>
   </div>
 
+  <!-- QR Code -->
+  <div class="qr-widget" id="qr-widget">
+    <img class="qr-img" id="qr-img" alt="Scan to join" width="80" height="80">
+    <div class="qr-label">Scan to join</div>
+  </div>
+  <div class="qr-modal hidden" id="qr-modal">
+    <div class="qr-modal-content">
+      <img class="qr-modal-img" id="qr-modal-img" alt="Scan to join" width="200" height="200">
+      <div class="qr-modal-url" id="qr-modal-url"></div>
+      <button class="qr-copy-btn" id="qr-copy-btn">Copy Link</button>
+      <button class="qr-close-btn" id="qr-close-btn">&times;</button>
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/socket.js"></script>
   <script src="js/player.js"></script>
   <script src="js/chat.js"></script>

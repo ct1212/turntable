@@ -17,7 +17,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"],
       frameSrc: ["https://www.youtube.com"],
-      imgSrc: ["'self'", "https://i.ytimg.com", "https://*.ggpht.com", "data:"],
+      imgSrc: ["'self'", "https://i.ytimg.com", "https://*.ggpht.com", "https://api.qrserver.com", "data:"],
       connectSrc: ["'self'", "ws:", "wss:"],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
@@ -358,6 +358,12 @@ io.on('connection', (socket) => {
 
     io.to(currentRoomId).emit('dj:update', room.getPublicDJState());
 
+    // Notify room that a track was added
+    const queueUser = room.users.get(socket.id);
+    io.to(currentRoomId).emit('chat:system', {
+      text: queueUser.username + ' queued "' + track.title.substring(0, 50) + '"'
+    });
+
     // If room is idle, start playing immediately
     if (!room.syncEngine.isPlaying && !room.syncEngine.currentTrack) {
       advanceTrack(room);
@@ -381,6 +387,25 @@ io.on('connection', (socket) => {
     }
 
     io.to(currentRoomId).emit('dj:update', room.getPublicDJState());
+  });
+
+  // --- DJ skip own track ---
+
+  socket.on('dj:skipTrack', () => {
+    if (!currentRoomId) return;
+    if (!actionLimiter.check(socket.id)) return;
+
+    const room = roomManager.getRoom(currentRoomId);
+    if (!room) return;
+
+    // Only the current DJ can skip their own track
+    if (room.syncEngine.currentDJ !== socket.id) return;
+
+    const user = room.users.get(socket.id);
+    io.to(currentRoomId).emit('track:skip', {
+      reason: (user?.username || 'DJ') + ' skipped their track'
+    });
+    room.syncEngine.handleTrackEnd();
   });
 
   // --- Voting ---
