@@ -424,7 +424,7 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #queue-tracks {
@@ -738,11 +738,11 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-/* QR Code widget */
+/* QR Code widget — offset from sidebar on desktop */
 .qr-widget {
   position: fixed;
   bottom: var(--space-md);
-  right: var(--space-md);
+  right: calc(280px + var(--space-md));
   z-index: 100;
   background: white;
   border-radius: var(--radius-md);

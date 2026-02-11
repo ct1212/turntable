@@ -7,6 +7,9 @@ const Player = {
   isPlaying: false,
   autoplayBlocked: false,
   progressInterval: null,
+  _autoplayCheckTimer: null,
+  _userPaused: false,
+  _pendingTrack: null,  // Track waiting for YouTube API to be ready
 
   init(containerId) {
     // Load YouTube IFrame API
@@ -19,17 +22,24 @@ const Player = {
         height: '100%',
         width: '100%',
         playerVars: {
-          controls: 0,
+          controls: 1,
           disablekb: 1,
           modestbranding: 1,
           rel: 0,
           iv_load_policy: 3,
           playsinline: 1,
-          origin: window.location.origin
+          origin: window.location.origin,
+          autoplay: 1
         },
         events: {
           onReady: () => {
             this.isReady = true;
+            // Load any track that arrived before the API was ready
+            if (this._pendingTrack) {
+              const p = this._pendingTrack;
+              this._pendingTrack = null;
+              this.loadTrack(p.videoId, p.seekTo);
+            }
           },
           onStateChange: (e) => this.onStateChange(e),
           onError: (e) => this.onError(e)
@@ -121,18 +131,24 @@ const Player = {
   },
 
   onTrackPlay(data) {
-    this.currentVideoId = data.videoId;
     this.currentDuration = data.duration;
     this.isPlaying = true;
 
     document.getElementById('player-idle').classList.add('hidden');
 
+    const seekTo = data.sync ? data.sync.elapsed : 0;
+
     if (this.isReady) {
-      const seekTo = data.sync ? data.sync.elapsed : 0;
+      this.currentVideoId = data.videoId;
       this.ytPlayer.loadVideoById({
         videoId: data.videoId,
         startSeconds: seekTo
       });
+    } else {
+      // YouTube API not ready yet — queue for when it is
+      this._pendingTrack = { videoId: data.videoId, seekTo };
+      // Don't set currentVideoId so sync() will retry loading when API is ready
+      this.currentVideoId = null;
     }
 
     this.updateNowPlaying({
@@ -172,6 +188,11 @@ const Player = {
     if (event.data === YT.PlayerState.PLAYING) {
       // Always dismiss the autoplay overlay when we're actually playing
       this.autoplayBlocked = false;
+      this._userPaused = false;
+      if (this._autoplayCheckTimer) {
+        clearTimeout(this._autoplayCheckTimer);
+        this._autoplayCheckTimer = null;
+      }
       document.getElementById('autoplay-overlay').classList.add('hidden');
 
       // Report real metadata to server (only once per video)
@@ -191,15 +212,31 @@ const Player = {
       }
     }
 
-    // Detect autoplay block — only if we're stuck UNSTARTED well after loading
+    // Detect autoplay block — check if we're not playing after loading
     if (event.data === YT.PlayerState.UNSTARTED && this.currentVideoId) {
-      setTimeout(() => {
+      if (this._autoplayCheckTimer) clearTimeout(this._autoplayCheckTimer);
+      this._autoplayCheckTimer = setTimeout(() => {
         const state = this.ytPlayer.getPlayerState();
-        if (state === YT.PlayerState.UNSTARTED || state === YT.PlayerState.CUED) {
+        if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
           this.autoplayBlocked = true;
           document.getElementById('autoplay-overlay').classList.remove('hidden');
         }
-      }, 3000);
+      }, 2000);
+    }
+
+    // Also detect autoplay block from CUED state (loadVideoById failed to autoplay)
+    if (event.data === YT.PlayerState.CUED && this.currentVideoId) {
+      this.autoplayBlocked = true;
+      document.getElementById('autoplay-overlay').classList.remove('hidden');
+    }
+
+    // Detect pause immediately after load (browser blocked autoplay mid-play)
+    if (event.data === YT.PlayerState.PAUSED && this.currentVideoId && !this._userPaused) {
+      const currentTime = this.ytPlayer.getCurrentTime();
+      if (currentTime < 1) {
+        this.autoplayBlocked = true;
+        document.getElementById('autoplay-overlay').classList.remove('hidden');
+      }
     }
   },
 

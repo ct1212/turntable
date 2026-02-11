@@ -359,10 +359,16 @@ io.on('connection', (socket) => {
         return socket.emit('room:error', { message: 'Invalid YouTube URL' });
       }
       const info = await getVideoInfo(id);
-      if (info && !info.error) {
+      if (info && !info.error && info.duration > 0) {
         track = info;
       } else {
-        track = { videoId: id, title: 'Loading...', thumbnail: '', duration: 300 };
+        // Fallback: use 5min default duration; real duration comes from client metadata report
+        track = {
+          videoId: id,
+          title: info?.title || 'Loading...',
+          thumbnail: info?.thumbnail || '',
+          duration: info?.duration > 0 ? info.duration : 300
+        };
       }
     } else {
       return socket.emit('room:error', { message: 'No video specified' });
