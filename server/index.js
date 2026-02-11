@@ -655,12 +655,15 @@ io.on('connection', (socket) => {
     const room = roomManager.getRoom(currentRoomId);
     if (!room) return;
 
-    // If error-triggered skip, notify the room
+    // If error-triggered skip, notify the room (except for embedding errors - user sees toast)
     if (data.error && room.syncEngine.currentTrack?.videoId === data.videoId) {
       const reason = sanitizeString(data.errorReason || 'playback error', 100);
-      io.to(currentRoomId).emit('track:skip', {
-        reason: 'Track skipped: ' + reason
-      });
+      // Don't send track:skip event for embedding errors (client shows toast instead)
+      if (!reason.includes('Embedding not allowed')) {
+        io.to(currentRoomId).emit('track:skip', {
+          reason: 'Track skipped: ' + reason
+        });
+      }
     }
 
     room.syncEngine.reportTrackEnded(data.videoId);

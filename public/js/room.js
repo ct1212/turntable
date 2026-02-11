@@ -133,7 +133,10 @@ const RoomController = {
 
     Socket.on('track:skip', (data) => {
       Player.onSkip(data);
-      Chat.addSystemMessage('Track was skipped: ' + (data.reason || ''));
+      // Don't show system message for embedding errors (user already sees toast)
+      if (data.reason && !data.reason.includes('Embedding not allowed')) {
+        Chat.addSystemMessage('Track was skipped: ' + data.reason);
+      }
     });
 
     // Server system messages (queue notifications, etc.)

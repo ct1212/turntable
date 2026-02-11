@@ -265,7 +265,19 @@ const Player = {
       150: 'Embedding not allowed by video owner'
     };
     const reason = messages[code] || 'Unknown player error (code ' + code + ')';
-    Toast.show(reason + '. Skipping...', 'error');
+
+    // For embedding errors, offer a more helpful message with suggestion
+    if (code === 101 || code === 150) {
+      Toast.show('🚫 This video can\'t be played here due to owner restrictions.', 'error', 5000);
+
+      // Show tip to try another version (same duration as error message)
+      setTimeout(() => {
+        Toast.show('💡 Tip: Try another version of the same song', 'info', 5000);
+      }, 2000);
+    } else {
+      Toast.show(reason + '. Skipping...', 'error', 5000);
+    }
+
     Socket.emit('track:ended', {
       videoId: this.currentVideoId,
       error: true,

@@ -66,7 +66,7 @@ const Queue = {
       Socket.emit('dj:queueTrack', { url: value });
       document.getElementById('add-track-input').value = '';
       document.getElementById('search-results').classList.add('hidden');
-      Toast.show('Adding track...');
+      // Don't show toast - let the server respond with success/error
     } else {
       // Search YouTube
       await this.search(value);
