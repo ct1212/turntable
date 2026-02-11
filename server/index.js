@@ -236,12 +236,11 @@ io.on('connection', (socket) => {
 
     room.onTrackEndCallback = (r) => advanceTrack(r);
 
-    // Process seed tracks if provided
+    // Store seed tracks if provided (defer validation to queue time like normal tracks)
     if (Array.isArray(data.seedTracks) && data.seedTracks.length > 0) {
-      room._seedTracks = [];
-
       const playlistEntry = data.seedTracks.find(t => t.playlistId);
       if (playlistEntry) {
+        // For playlists, we still need to fetch the items
         const items = await getPlaylistItems(
           sanitizeString(playlistEntry.playlistId, 50),
           20
@@ -250,16 +249,11 @@ io.on('connection', (socket) => {
           room._seedTracks = items;
         }
       } else {
-        const videoIds = data.seedTracks
+        // For direct video IDs/URLs, just store them - validation happens at queue time
+        room._seedTracks = data.seedTracks
           .filter(t => t.videoId && /^[a-zA-Z0-9_-]{11}$/.test(t.videoId))
+          .map(t => ({ videoId: t.videoId }))
           .slice(0, 20);
-
-        for (const { videoId } of videoIds) {
-          const info = await getVideoInfo(videoId);
-          if (info && !info.error && info.duration > 0) {
-            room._seedTracks.push(info);
-          }
-        }
       }
     }
 
@@ -312,7 +306,15 @@ io.on('connection', (socket) => {
         // If there are seed tracks, add them to the creator's queue
         if (room._seedTracks && room._seedTracks.length > 0) {
           for (const track of room._seedTracks) {
-            room.djQueue.addTrack(socket.id, { ...track, addedAt: Date.now() });
+            // Ensure track has at least basic structure - metadata will be fetched by client
+            const fullTrack = {
+              videoId: track.videoId,
+              title: track.title || 'Loading...',
+              thumbnail: track.thumbnail || '',
+              duration: track.duration || 300, // Default 5min if not provided
+              addedAt: Date.now()
+            };
+            room.djQueue.addTrack(socket.id, fullTrack);
           }
           room._seedTracks = null;
           advanceTrack(room);
