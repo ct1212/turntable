@@ -300,18 +300,23 @@ io.on('connection', (socket) => {
       room.onTrackEndCallback = (r) => advanceTrack(r);
     }
 
-    // Auto step-up first joiner as DJ with seed tracks
+    // Auto step-up room creator as DJ
     // Note: can't match socket.id === room.createdBy because page navigation creates a new socket
-    if (room._seedTracks && room._seedTracks.length > 0) {
+    // So we check if this is the first user joining
+    if (room.users.size === 1) {
       const user = room.users.get(socket.id);
       const stepResult = room.djQueue.stepUp(socket.id, user.username, user.avatarId);
       if (stepResult.success) {
         user.role = 'dj';
-        for (const track of room._seedTracks) {
-          room.djQueue.addTrack(socket.id, { ...track, addedAt: Date.now() });
+
+        // If there are seed tracks, add them to the creator's queue
+        if (room._seedTracks && room._seedTracks.length > 0) {
+          for (const track of room._seedTracks) {
+            room.djQueue.addTrack(socket.id, { ...track, addedAt: Date.now() });
+          }
+          room._seedTracks = null;
+          advanceTrack(room);
         }
-        room._seedTracks = null;
-        advanceTrack(room);
       }
     }
 
