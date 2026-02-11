@@ -447,6 +447,11 @@ io.on('connection', (socket) => {
 
     track.addedAt = Date.now();
 
+    // Check if this track is currently playing
+    if (room.syncEngine.currentTrack && room.syncEngine.currentTrack.videoId === track.videoId) {
+      return socket.emit('room:error', { message: 'This track is currently playing' });
+    }
+
     const result = room.djQueue.addTrack(socket.id, track);
     if (result.error) {
       return socket.emit('room:error', { message: result.error });

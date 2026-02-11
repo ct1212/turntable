@@ -11,6 +11,7 @@ const Player = {
   _userPaused: false,
   _pendingTrack: null,  // Track waiting for YouTube API to be ready
   _lastLoadTime: null,
+  _lastSyncState: null,  // Store last sync state for resync on visibility change
 
   init(containerId) {
     // Load YouTube IFrame API
@@ -56,6 +57,38 @@ const Player = {
         this.autoplayBlocked = false;
         if (this.currentVideoId) {
           this.ytPlayer.playVideo();
+        }
+      });
+    }
+
+    // Handle visibility change - resume and resync when user returns
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.isPlaying && this.ytPlayer && this.isReady && this.currentVideoId) {
+        // Page became visible again - resync to correct position
+        setTimeout(() => {
+          const state = this.ytPlayer.getPlayerState();
+          if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
+            // Player paused while away - seek to correct position and resume
+            const elapsed = this.getElapsedTime();
+            if (elapsed < this.currentDuration) {
+              this.ytPlayer.seekTo(elapsed, true);
+              this.ytPlayer.playVideo();
+            }
+          }
+        }, 100);
+      }
+    });
+
+    // Initialize Media Session API for background playback support
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (this.ytPlayer && this.isReady) {
+          this.ytPlayer.playVideo();
+        }
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (this.ytPlayer && this.isReady) {
+          this.ytPlayer.pauseVideo();
         }
       });
     }
@@ -129,7 +162,14 @@ const Player = {
       this.ytPlayer.pauseVideo();
     }
 
+    this._lastSyncState = serverState;
     this.updateNowPlaying(serverState);
+  },
+
+  getElapsedTime() {
+    if (!this._lastSyncState) return 0;
+    const timeSinceSync = (Date.now() - this._lastSyncState.serverTime + this.clockOffset) / 1000;
+    return this._lastSyncState.elapsed + timeSinceSync;
   },
 
   onTrackPlay(data) {
@@ -296,6 +336,18 @@ const Player = {
     }
     if (state.duration) {
       this.currentDuration = state.duration;
+    }
+
+    // Update Media Session metadata for background playback
+    if ('mediaSession' in navigator && state.title) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: state.title || 'Unknown Track',
+        artist: state.dj ? (typeof state.dj === 'object' ? state.dj.username : state.dj) : 'Unknown DJ',
+        album: 'Turntable',
+        artwork: state.thumbnail ? [
+          { src: state.thumbnail, sizes: '320x180', type: 'image/jpeg' }
+        ] : []
+      });
     }
   },
 
