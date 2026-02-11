@@ -62,13 +62,13 @@
 
   /* On mobile move QR toggle to left side */
   .qr-toggle-btn {
-    bottom: var(--space-sm);
+    bottom: calc(var(--space-sm) + 50px);
     left: var(--space-sm);
     right: auto;
   }
 
   .qr-widget {
-    bottom: calc(var(--space-sm) + 48px);
+    bottom: calc(var(--space-sm) + 100px);
     left: var(--space-sm);
     right: auto;
     padding: 4px;

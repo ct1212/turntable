@@ -118,11 +118,13 @@ const Lobby = {
       const payload = { name, theme, username, avatarId: this.selectedAvatar };
       if (seedTracks.length > 0) payload.seedTracks = seedTracks;
 
+      this.showTransition('Creating room...');
       this.socket.emit('room:create', payload);
     });
 
     // Handle room created
     this.socket.on('room:created', ({ roomId }) => {
+      this.showTransition('Joining room...');
       window.location.href = `/room.html?id=${roomId}`;
     });
 
@@ -158,6 +160,7 @@ const Lobby = {
     rooms.forEach(room => {
       const card = document.createElement('div');
       card.className = 'room-card';
+      card.dataset.roomTheme = room.theme || 'default';
       card.addEventListener('click', () => this.joinRoom(room.id));
 
       let trackHtml = '';
@@ -170,7 +173,7 @@ const Lobby = {
       card.innerHTML = `
         <div class="room-card-name">${this.escapeHtml(room.name)}</div>
         ${room.theme ? `<div class="room-card-theme">${this.escapeHtml(room.theme)}</div>` : ''}
-        <div class="room-card-info">${room.userCount} ${room.userCount === 1 ? 'person' : 'people'} &middot; ${room.djCount} DJ${room.djCount !== 1 ? 's' : ''}</div>
+        <div class="room-card-info"><span class="room-badge">${room.userCount} ${room.userCount === 1 ? 'person' : 'people'}</span> <span class="room-badge">${room.djCount} DJ${room.djCount !== 1 ? 's' : ''}</span></div>
         ${trackHtml}
       `;
 
@@ -182,7 +185,15 @@ const Lobby = {
     const username = this.getUsername();
     this.saveIdentity(username);
     document.getElementById('username').value = username;
+    this.showTransition('Joining room...');
     window.location.href = `/room.html?id=${roomId}`;
+  },
+
+  showTransition(message) {
+    const overlay = document.createElement('div');
+    overlay.className = 'create-overlay';
+    overlay.innerHTML = '<div class="spinner"></div><p>' + (message || 'Loading...') + '</p>';
+    document.body.appendChild(overlay);
   },
 
   escapeHtml(str) {

@@ -23,11 +23,21 @@
       <div class="entry-form">
         <div>
           <label for="username">Username</label>
-          <input type="text" id="username" placeholder="Optional - auto-generated" maxlength="20" autocomplete="off">
+          <input type="search" id="username" name="display_nick" placeholder="Optional - auto-generated" maxlength="20" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other">
         </div>
         <div>
           <label>Avatar</label>
           <div class="avatar-picker" id="avatar-picker"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rooms-section">
+      <h2>Active Rooms</h2>
+      <div class="rooms-grid" id="rooms-grid">
+        <div class="empty-state" id="empty-state">
+          <div class="emoji">🎧</div>
+          <p>No rooms yet. Create one to get started!</p>
         </div>
       </div>
     </section>
@@ -69,16 +79,6 @@
           <textarea id="seed-tracks" class="seed-tracks-input" rows="3" placeholder="Paste YouTube URLs (one per line) or a playlist URL"></textarea>
         </div>
         <button class="btn btn-primary" id="create-room-btn">Create Room</button>
-      </div>
-    </section>
-
-    <section class="rooms-section">
-      <h2>Active Rooms</h2>
-      <div class="rooms-grid" id="rooms-grid">
-        <div class="empty-state" id="empty-state">
-          <div class="emoji">🎧</div>
-          <p>No rooms yet. Create one to get started!</p>
-        </div>
       </div>
     </section>
   </div>
